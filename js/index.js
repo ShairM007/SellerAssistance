@@ -249,24 +249,50 @@ const firebaseConfig = {
   }
   });
   
+  // // Set up token removal listener
+  // firebase.auth().onIdTokenChanged(function(user) {
+  // if (user) {
+  //   // User is signed in
+  //   const userRef = firebase.database().ref('users/' + user.uid);
+  
+  //   userRef.child('user_tokens').once('value', function(snapshot) {
+  //     const tokens = snapshot.val();
+  
+  //     // Remove all tokens except the current one
+  //     const currentToken = firebase.auth().currentUser.getIdToken();
+  //     const filteredTokens = tokens.filter(token => token !== currentToken);
+  
+  //     // Update the user's tokens
+  //     userRef.child('user_tokens').set(filteredTokens);
+  //   });
+  // }
+  // });
   // Set up token removal listener
-  firebase.auth().onIdTokenChanged(function(user) {
+firebase.auth().onIdTokenChanged(function(user) {
   if (user) {
     // User is signed in
     const userRef = firebase.database().ref('users/' + user.uid);
   
-    userRef.child('user_tokens').once('value', function(snapshot) {
-      const tokens = snapshot.val();
+    // Get the user's current ID token
+    user.getIdToken()
+      .then((currentToken) => {
+        // Retrieve the user's tokens from the database
+        userRef.child('user_tokens').once('value', function(snapshot) {
+          const tokens = snapshot.val();
   
-      // Remove all tokens except the current one
-      const currentToken = firebase.auth().currentUser.getIdToken();
-      const filteredTokens = tokens.filter(token => token !== currentToken);
+          // Remove all tokens except the current one
+          const filteredTokens = tokens.filter(token => token !== currentToken);
   
-      // Update the user's tokens
-      userRef.child('user_tokens').set(filteredTokens);
-    });
+          // Update the user's tokens
+          userRef.child('user_tokens').set(filteredTokens);
+        });
+      })
+      .catch((error) => {
+        // Handle errors while getting the ID token
+        console.error('Error getting ID token:', error);
+      });
   }
-  });
-  
+});
+
   
 
