@@ -87,7 +87,7 @@ async function searchAndDisplayResults(query) {
 
     // Display error message if no results were found
     if (!resultsFound) {
-        displayResult("Contact Ameer if postcode not found.");
+        displayResult("Contact Husnain Shairif postcode not found.");
     }
 }
 
