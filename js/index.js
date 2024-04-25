@@ -191,24 +191,85 @@ const firebaseConfig = {
   }
   }
   
+
+
   // Logout function
-  function logout() {
-  auth.signOut()
-    .then(function() {
-      // Sign-out successful
-      alert('User Logged Out!!');
-  
-      // Redirect to login page
-      window.location.href = 'index.html';
-    })
-    .catch(function(error) {
-      // An error happened
-      var error_code = error.code;
-      var error_message = error.message;
-  
-      alert(error_message);
-    });
+function logout() {
+  var user = auth.currentUser;
+  if (user) {
+      // Get the current user's authentication token
+      user.getIdToken(true)
+          .then(function(token) {
+              // Remove the token from the user's tokens in the database
+              removeTokenFromDatabase(user.uid, token)
+                  .then(function() {
+                      // Sign out the user
+                      return auth.signOut();
+                  })
+                  .then(function() {
+                      // Sign-out successful
+                      alert('User Logged Out!!');
+                      // Redirect to login page
+                      window.location.href = 'index.html';
+                  })
+                  .catch(function(error) {
+                      // Handle errors
+                      var errorCode = error.code;
+                      var errorMessage = error.message;
+                      alert(errorMessage);
+                  });
+          })
+          .catch(function(error) {
+              // Handle errors
+              var errorCode = error.code;
+              var errorMessage = error.message;
+              alert(errorMessage);
+          });
+  } else {
+      // No user signed in
+      alert('No user signed in!');
   }
+}
+
+// Function to remove token from database
+function removeTokenFromDatabase(userId, token) {
+  return new Promise((resolve, reject) => {
+      const userRef = firebase.database().ref('users/' + userId);
+      userRef.child('user_tokens').once('value', function(snapshot) {
+          const tokens = snapshot.val();
+          if (tokens && tokens.includes(token)) {
+              // Remove the token from the array
+              const updatedTokens = tokens.filter(t => t !== token);
+              // Update the user's tokens in the database
+              userRef.child('user_tokens').set(updatedTokens)
+                  .then(resolve)
+                  .catch(reject);
+          } else {
+              // Token not found, resolve immediately
+              resolve();
+          }
+      });
+  });
+}
+
+  // Logout function
+  // function logout() {
+  // auth.signOut()
+  //   .then(function() {
+  //     // Sign-out successful
+  //     alert('User Logged Out!!');
+  
+  //     // Redirect to login page
+  //     window.location.href = 'index.html';
+  //   })
+  //   .catch(function(error) {
+  //     // An error happened
+  //     var error_code = error.code;
+  //     var error_message = error.message;
+  
+  //     alert(error_message);
+  //   });
+  // }
   
   // Check if user is authenticated
   firebase.auth().onAuthStateChanged(function(user) {
